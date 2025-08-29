@@ -1,0 +1,6 @@
+{
+  "/challenge/page": "app/challenge/page.js",
+  "/game/page": "app/game/page.js",
+  "/login/page": "app/login/page.js",
+  "/results/page": "app/results/page.js"
+}
