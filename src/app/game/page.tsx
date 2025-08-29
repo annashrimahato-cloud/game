@@ -17,6 +17,8 @@ export default function WorditGame() {
   const [totalScore, setTotalScore] = useState(0)
   const [gameEnded, setGameEnded] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
+  const [successMessage, setSuccessMessage] = useState('')
+  const [isValidating, setIsValidating] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
   const START_LETTER = 'A'
@@ -47,29 +49,40 @@ export default function WorditGame() {
     return `${mins}:${secs.toString().padStart(2, '0')}`
   }
 
-  const validateWord = (word: string): boolean => {
+  const validateWord = async (word: string): Promise<{ isValid: boolean; reason?: string }> => {
     const trimmedWord = word.trim().toLowerCase()
     
     // Check if word starts and ends with correct letters
     if (!trimmedWord.startsWith(START_LETTER.toLowerCase()) || 
         !trimmedWord.endsWith(END_LETTER.toLowerCase())) {
-      return false
+      return { isValid: false, reason: 'format' }
     }
     
     // Check if word is already used
     if (words.some(entry => entry.word.toLowerCase() === trimmedWord)) {
-      return false
+      return { isValid: false, reason: 'duplicate' }
     }
     
     // Check if word is at least 2 letters long
     if (trimmedWord.length < 2) {
-      return false
+      return { isValid: false, reason: 'length' }
     }
     
-    return true
+    // Check if word exists in English dictionary
+    try {
+      const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${trimmedWord}`)
+      if (!response.ok) {
+        return { isValid: false, reason: 'dictionary' }
+      }
+      return { isValid: true }
+    } catch (error) {
+      // If API fails, we'll be lenient and accept the word
+      console.warn('Dictionary API failed, accepting word:', error)
+      return { isValid: true }
+    }
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
     if (gameEnded) return
@@ -78,27 +91,45 @@ export default function WorditGame() {
     if (!trimmedWord) return
     
     setErrorMessage('')
+    setSuccessMessage('')
+    setIsValidating(true)
     
-    if (validateWord(trimmedWord)) {
-      const newWord: WordEntry = {
-        word: trimmedWord,
-        score: trimmedWord.length,
-        timestamp: Date.now()
-      }
+    try {
+      const validation = await validateWord(trimmedWord)
       
-      setWords(prev => [...prev, newWord])
-      setTotalScore(prev => prev + trimmedWord.length)
-      setInputWord('')
-    } else {
-      if (!trimmedWord.startsWith(START_LETTER.toLowerCase())) {
-        setErrorMessage(`Word must start with "${START_LETTER}"`)
-      } else if (!trimmedWord.endsWith(END_LETTER.toLowerCase())) {
-        setErrorMessage(`Word must end with "${END_LETTER}"`)
-      } else if (words.some(entry => entry.word.toLowerCase() === trimmedWord)) {
-        setErrorMessage('Word already used!')
+      if (validation.isValid) {
+        const newWord: WordEntry = {
+          word: trimmedWord,
+          score: trimmedWord.length,
+          timestamp: Date.now()
+        }
+        
+        setWords(prev => [...prev, newWord])
+        setTotalScore(prev => prev + trimmedWord.length)
+        setInputWord('')
+        setSuccessMessage(`✅ "${trimmedWord}" added! +${trimmedWord.length} points`)
+        
+        // Clear success message after 2 seconds
+        setTimeout(() => setSuccessMessage(''), 2000)
       } else {
-        setErrorMessage('Invalid word!')
+        if (validation.reason === 'format') {
+          if (!trimmedWord.startsWith(START_LETTER.toLowerCase())) {
+            setErrorMessage(`Word must start with "${START_LETTER}"`)
+          } else if (!trimmedWord.endsWith(END_LETTER.toLowerCase())) {
+            setErrorMessage(`Word must end with "${END_LETTER}"`)
+          }
+        } else if (validation.reason === 'duplicate') {
+          setErrorMessage('Word already used!')
+        } else if (validation.reason === 'length') {
+          setErrorMessage('Word must be at least 2 letters long')
+        } else if (validation.reason === 'dictionary') {
+          setErrorMessage('❌ Not an appropriate English word.')
+        } else {
+          setErrorMessage('Invalid word!')
+        }
       }
+    } finally {
+      setIsValidating(false)
     }
   }
 
@@ -159,18 +190,28 @@ export default function WorditGame() {
         {!gameEnded ? (
           <form onSubmit={handleSubmit} className="mb-6">
             <div className="bg-white rounded-lg shadow-sm p-4">
-              <input
-                ref={inputRef}
-                type="text"
-                value={inputWord}
-                onChange={(e) => setInputWord(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="Type a word..."
-                className="w-full px-4 py-3 text-lg border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                disabled={gameEnded}
-              />
+              <div className="relative">
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={inputWord}
+                  onChange={(e) => setInputWord(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  placeholder={isValidating ? "Checking word..." : "Type a word..."}
+                  className="w-full px-4 py-3 text-lg border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-12"
+                  disabled={gameEnded || isValidating}
+                />
+                {isValidating && (
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+                  </div>
+                )}
+              </div>
               {errorMessage && (
                 <div className="mt-2 text-sm text-red-600">{errorMessage}</div>
+              )}
+              {successMessage && (
+                <div className="mt-2 text-sm text-green-600">{successMessage}</div>
               )}
             </div>
           </form>

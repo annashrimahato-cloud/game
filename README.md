@@ -7,6 +7,7 @@ A Next.js word game application built with TypeScript and TailwindCSS.
 - **Wordit Game**: A word-building game where players create words starting with 'A' and ending with 'E'
 - **3-minute countdown timer** with live updates
 - **Real-time scoring** based on word length
+- **Dictionary validation** using English dictionary API
 - **Input validation** to ensure words meet game rules
 - **Clean, mobile-first UI** with TailwindCSS
 - **Score sharing** with unique links and social features
@@ -15,6 +16,7 @@ A Next.js word game application built with TypeScript and TailwindCSS.
 ## Game Rules
 
 - Words must start with "A" and end with "E"
+- Words must be valid English words (checked against dictionary API)
 - Each word scores points equal to its length
 - Words cannot be repeated
 - Players have 3 minutes to find as many valid words as possible

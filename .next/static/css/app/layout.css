@@ -571,6 +571,18 @@ video {
 [hidden]:where(:not([hidden="until-found"])) {
   display: none;
 }
+.absolute {
+  position: absolute;
+}
+.relative {
+  position: relative;
+}
+.right-3 {
+  right: 0.75rem;
+}
+.top-1\/2 {
+  top: 50%;
+}
 .mx-auto {
   margin-left: auto;
   margin-right: auto;
@@ -611,11 +623,11 @@ video {
 .h-8 {
   height: 2rem;
 }
-.max-h-64 {
-  max-height: 16rem;
-}
 .max-h-48 {
   max-height: 12rem;
+}
+.max-h-64 {
+  max-height: 16rem;
 }
 .min-h-screen {
   min-height: 100vh;
@@ -631,6 +643,13 @@ video {
 }
 .max-w-md {
   max-width: 28rem;
+}
+.-translate-y-1\/2 {
+  --tw-translate-y: -50%;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+.transform {
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
 }
 @keyframes spin {
 
@@ -772,6 +791,9 @@ video {
 .py-4 {
   padding-top: 1rem;
   padding-bottom: 1rem;
+}
+.pr-12 {
+  padding-right: 3rem;
 }
 .text-center {
   text-align: center;
