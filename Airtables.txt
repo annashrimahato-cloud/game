@@ -1,0 +1,25 @@
+1. Table: Daily Letter Pairs
+
+Date (Date) → Example: 29 Aug 2025
+
+First Letter (Single line text) → Example: A
+
+Last Letter (Single line text) → Example: E
+
+2. Table: Users
+
+Username (Single line text, unique)
+
+High Score (Number) → Highest score ever achieved
+
+Total Score (Number, optional) → Running total of all scores
+
+3. Table: Game Sessions
+
+Username (Linked record → Users)
+
+Date (Date)
+
+Letter Pair (Linked record → Daily Letter Pairs)
+
+Score (Number) → Final score for that session
