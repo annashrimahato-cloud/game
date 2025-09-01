@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import { airtableAPI, GameData as AirtableGameData, UserData } from '@/lib/airtable'
 
 interface WordEntry {
   word: string
@@ -19,6 +20,7 @@ export default function WorditGame() {
   const [errorMessage, setErrorMessage] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
   const [isValidating, setIsValidating] = useState(false)
+  const [username, setUsername] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
 
   const START_LETTER = 'A'
@@ -42,6 +44,14 @@ export default function WorditGame() {
       inputRef.current.focus()
     }
   }, [gameEnded])
+
+  // Get username from localStorage
+  useEffect(() => {
+    const storedUsername = localStorage.getItem('username')
+    if (storedUsername) {
+      setUsername(storedUsername)
+    }
+  }, [])
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60)
@@ -139,15 +149,55 @@ export default function WorditGame() {
     }
   }
 
-  const handleGameEnd = () => {
-    // Navigate to results page with game data
-    const gameData = {
-      totalScore,
-      words,
-      timeUsed: 180 - timeLeft
+  const handleGameEnd = async () => {
+    try {
+      const shareId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
+      const sessionName = `Wordit Session ${new Date().toLocaleDateString()}`
+      const letterPair = `${START_LETTER}→${END_LETTER}`
+
+      // Save game score to Airtable
+      const airtableGameData: AirtableGameData = {
+        username: username,
+        score: totalScore,
+        wordsCount: words.length,
+        timeUsed: 180 - timeLeft,
+        words: words,
+        date: new Date().toISOString(),
+        shareId: shareId
+      }
+
+      await airtableAPI.saveGameScore(airtableGameData)
+
+      // Save game session to Airtable
+      await airtableAPI.saveGameSession({
+        username: username,
+        sessionName: sessionName,
+        letterPair: letterPair,
+        date: new Date().toISOString(),
+        score: totalScore
+      })
+
+      // Store game data locally for the results page
+      const gameData = {
+        totalScore,
+        words,
+        timeUsed: 180 - timeLeft,
+        shareId: shareId
+      }
+      localStorage.setItem('worditGameData', JSON.stringify(gameData))
+      
+      router.push('/results')
+    } catch (error) {
+      console.error('Error saving game data:', error)
+      // Fallback to local storage if Airtable fails
+      const gameData = {
+        totalScore,
+        words,
+        timeUsed: 180 - timeLeft
+      }
+      localStorage.setItem('worditGameData', JSON.stringify(gameData))
+      router.push('/results')
     }
-    localStorage.setItem('worditGameData', JSON.stringify(gameData))
-    router.push('/results')
   }
 
   return (
@@ -160,12 +210,20 @@ export default function WorditGame() {
             Start with <span className="font-bold text-blue-600">{START_LETTER}</span> • 
             End with <span className="font-bold text-blue-600">{END_LETTER}</span>
           </div>
-          <button
-            onClick={() => router.push('/challenge')}
-            className="text-blue-600 hover:text-blue-700 text-sm underline"
-          >
-            📤 Share Challenge
-          </button>
+          <div className="flex justify-center space-x-4">
+            <button
+              onClick={() => router.push('/challenge')}
+              className="text-blue-600 hover:text-blue-700 text-sm underline"
+            >
+              📤 Share Challenge
+            </button>
+            <button
+              onClick={() => router.push('/leaderboard')}
+              className="text-blue-600 hover:text-blue-700 text-sm underline"
+            >
+              🏆 Leaderboard
+            </button>
+          </div>
         </div>
 
         {/* Timer */}

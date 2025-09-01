@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { airtableAPI, SharedScoreData } from '@/lib/airtable'
 
 interface ShareData {
-  id: string
+  id?: string
   username: string
   score: number
   wordsCount: number
@@ -24,16 +25,25 @@ export default function SharedResultsPage({ params }: { params: { id: string } }
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    // Get share data from localStorage
-    const existingShares = JSON.parse(localStorage.getItem('worditShares') || '{}')
-    const data = existingShares[params.id]
-    
-    if (data) {
-      setShareData(data)
-    } else {
-      setError('Score not found or has expired')
+    const loadSharedScore = async () => {
+      try {
+        // Try to get shared score from Airtable
+        const data = await airtableAPI.getSharedScore(params.id)
+        
+        if (data) {
+          setShareData(data)
+        } else {
+          setError('Score not found or has expired')
+        }
+      } catch (error) {
+        console.error('Error loading shared score:', error)
+        setError('Failed to load score')
+      } finally {
+        setLoading(false)
+      }
     }
-    setLoading(false)
+
+    loadSharedScore()
   }, [params.id])
 
   const formatTime = (seconds: number) => {

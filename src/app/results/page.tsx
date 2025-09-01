@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { airtableAPI, GameData as AirtableGameData, UserData } from '@/lib/airtable'
 
 interface GameData {
   totalScore: number
@@ -11,6 +12,7 @@ interface GameData {
     timestamp: number
   }>
   timeUsed: number
+  shareId?: string
 }
 
 export default function ResultsPage() {
@@ -46,42 +48,42 @@ export default function ResultsPage() {
     router.push('/login')
   }
 
-  const handleShareScore = () => {
+  const handleShareScore = async () => {
     if (!gameData || !username) return
     
-    // Generate a unique share ID
-    const shareId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
-    
-    // Create share data
-    const shareData = {
-      id: shareId,
-      username: username,
-      score: gameData.totalScore,
-      wordsCount: gameData.words.length,
-      timeUsed: gameData.timeUsed,
-      date: new Date().toISOString(),
-      words: gameData.words
-    }
-    
-    // Store share data in localStorage (in a real app, this would go to a database)
-    const existingShares = JSON.parse(localStorage.getItem('worditShares') || '{}')
-    existingShares[shareId] = shareData
-    localStorage.setItem('worditShares', JSON.stringify(existingShares))
-    
-    // Create share URL
-    const shareUrl = `${window.location.origin}/shared/${shareId}`
-    
-    // Copy to clipboard
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(shareUrl).then(() => {
-        alert('Score shared! Link copied to clipboard.')
-      }).catch(() => {
+    try {
+      // Use the shareId from the game data if available, otherwise generate a new one
+      const shareId = gameData.shareId || Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
+      
+      // Save shared score to Airtable
+      await airtableAPI.saveSharedScore({
+        shareId: shareId,
+        username: username,
+        score: gameData.totalScore,
+        wordsCount: gameData.words.length,
+        timeUsed: gameData.timeUsed,
+        date: new Date().toISOString(),
+        words: gameData.words
+      })
+      
+      // Create share URL
+      const shareUrl = `${window.location.origin}/shared/${shareId}`
+      
+      // Copy to clipboard
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(shareUrl).then(() => {
+          alert('Score shared! Link copied to clipboard.')
+        }).catch(() => {
+          // Fallback for older browsers
+          prompt('Copy this link to share your score:', shareUrl)
+        })
+      } else {
         // Fallback for older browsers
         prompt('Copy this link to share your score:', shareUrl)
-      })
-    } else {
-      // Fallback for older browsers
-      prompt('Copy this link to share your score:', shareUrl)
+      }
+    } catch (error) {
+      console.error('Error sharing score:', error)
+      alert('Failed to share score. Please try again.')
     }
   }
 
