@@ -29,13 +29,6 @@
       "static/chunks/main-app-99b5002b48994641.js",
       "static/chunks/app/leaderboard/page-3dc207fbf0a38720.js"
     ],
-    "/challenge/page": [
-      "static/chunks/webpack-9d964d8cb0d81fe9.js",
-      "static/chunks/fd9d1056-87da80e0c187477b.js",
-      "static/chunks/117-0e4dc0d7e16c6b2e.js",
-      "static/chunks/main-app-99b5002b48994641.js",
-      "static/chunks/app/challenge/page-902a1260ad8640b4.js"
-    ],
     "/page": [
       "static/chunks/webpack-9d964d8cb0d81fe9.js",
       "static/chunks/fd9d1056-87da80e0c187477b.js",
@@ -49,6 +42,13 @@
       "static/chunks/117-0e4dc0d7e16c6b2e.js",
       "static/chunks/main-app-99b5002b48994641.js",
       "static/chunks/app/login/page-29f9fd57d525d992.js"
+    ],
+    "/challenge/page": [
+      "static/chunks/webpack-9d964d8cb0d81fe9.js",
+      "static/chunks/fd9d1056-87da80e0c187477b.js",
+      "static/chunks/117-0e4dc0d7e16c6b2e.js",
+      "static/chunks/main-app-99b5002b48994641.js",
+      "static/chunks/app/challenge/page-902a1260ad8640b4.js"
     ],
     "/results/page": [
       "static/chunks/webpack-9d964d8cb0d81fe9.js",
